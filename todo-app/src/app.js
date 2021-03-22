@@ -1,6 +1,6 @@
-import Model from './model.js'
-import View from './viewer.js'
-import Controller from './controller.js'
+import Model from './todoModel.js'
+import View from './todoViewer.js'
+import Controller from './todoController.js'
 
 window.addEventListener('load', () => {
   const model = new Model();
@@ -9,8 +9,8 @@ window.addEventListener('load', () => {
     addButton : document.getElementById('add-button'),
     todoTable : document.querySelector('.todo-table'),
     deleteBtn : document.getElementById('delete'),
-    completeBtn : document.getElementById('complete'),
     deleteCopmpletedBtn : document.getElementById('delete-completed'),
+    filter:document.getElementById('filter')
   });
   const controller = new Controller(model, view);
   controller.run();
