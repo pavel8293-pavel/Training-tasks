@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="../styles/style.css">
-    <script defer type="module" src="./main.js">  </script>
+    <script defer type="module" src="./app.js">  </script>
     <title>TODO</title>
 </head>
 
@@ -18,20 +18,23 @@
             <input type="button" id="add-button" value="Add">
         </div>
         <div class="todo-list">
+            <select id="filter" name="filter">
+                <option value="all">all</option>
+                <option value="completed">completed</option>
+                <option value="incompleted">incompleted</option>
+            </select>
             <table class="todo-table">
                 <tr class="table-head">
-                    <th>№</th>
-                    <th><input type ="checkbox"  name="select-all" id="select-all"></th>
+                    <th><input type="checkbox" name="select-all" id="select-all"></th>
                     <th>Things to do</th>
-                    <th id="Status">Status</th>
-                    <th>Edit</th>
-                    <th id="Date">Date</th>
+                    <th>Delete</th>
+                    <th id="date">Date</th>
                 </tr>
             </table>
             <div class="navigation">
-                <input type="button" id="delete" value="delete">
+                <div><span class="quantity"></span></div>
                 <input type="button" id="delete-completed" value="delete completed">
-                <input type="button" id="complete" value="complete">
+
             </div>
         </div>
 

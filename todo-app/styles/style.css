@@ -2,16 +2,31 @@
     padding: 0;
     margin: 0;
     border: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1rem;
+    outline: none;
   }
   
   *, *:before, *:after {
     box-sizing: border-box;
 }
 
+.add-todo {
+    display: flex;
+    justify-content: center;   
+    padding-top: 70px; 
+}
+
 .todo-table {
-    border-spacing: 0;
     margin: 0 auto;
-    width:50%
+    width: 100%;
+    border-spacing: 0;
+}
+
+.todo-list {
+    width: 40vw;
+    margin: 0 auto;
+    padding-top: 30px;
 }
 
 tr:nth-child(odd) {
@@ -23,38 +38,41 @@ tr:nth-child(even) {
 }
 
 td {
-    padding: 0px 20px 0px 20px;
+    text-align: center;
 }
 
 th {
-    height: 40px;
+    height: 50px;
     background-color: #67aae9;
 }
 
 tr {
-    height: 25px;
+    height: 40px;
 }
 
 tr:first-child {
-    text-align: start;
+    text-align: center;
 }
 
-.add-todo {
-    display: flex;
-    justify-content: center;    
+#filter {
+    background-color: #bfe1f5d5 ;
+}
+
+.selected{
+    text-decoration: line-through;
 }
 
 .navigation {
     display: flex;
     justify-content: space-between;
-    width: 50%;
+    width: 40vw;
     margin: 0 auto;
+    padding-top: 15px;
 }
 
 input[type=button] {
     background: rgba(250, 238, 78, 0.575);
     padding: 0px 20px 0px 20px;
-    width: 160px;
     height: 20px;
 }
 
@@ -64,5 +82,26 @@ input[type=text] {
 
 input[type=checkbox] {
     vertical-align: -webkit-baseline-middle;
-
 }
+
+input[type=button]:hover, #filter:hover, th#date:hover {
+    cursor: pointer;
+    background-color: rgb(245, 227, 69);
+}
+
+input[type=checkbox]:hover {
+    cursor: pointer;
+}
+
+
+@media only screen and (max-width: 1000px) {
+    .todo-list {
+        width: 60vw;
+    }
+  }
+
+@media only screen and (max-width: 700px) {
+    .todo-list {
+        width: 80vw;
+    }
+  }
