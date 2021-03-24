@@ -14,7 +14,7 @@ export default class View extends EventEmitter {
     elements.todoTable.addEventListener('dblclick', (event) => { this.emit(ACTIONS.TABLE_DBLCLICKED, event.target); });
     elements.filterStatus.addEventListener('change', (event) => { this.emit(ACTIONS.NEW_STATUS, event.target.value); });
     elements.deleteCopmpletedBtn.addEventListener('click', (event) => this.emit(ACTIONS.DELETE_COMPLETED, event.target));
-    window.addEventListener('beforeunload', () => { this.emit(ACTIONS.LEAVE_PAGE); });
+    window.addEventListener('unload', () => { this.emit(ACTIONS.LEAVE_PAGE); });
     this.input.addEventListener('input', (event) => this.emit(ACTIONS.INPUT_MODIFIED, event.target.value));
   }
 
