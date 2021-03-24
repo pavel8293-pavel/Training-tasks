@@ -15,10 +15,10 @@
         <div class="add-todo">
             <label for="add-item">What do you have to do:</label>
             <input type="text" name="new-todo" id="add-item" placeholder="Add item to do" autofocus>
-            <input type="button" id="add-button" value="Add">
+            <input type="button" id="add-button" value="Add" disabled>
         </div>
         <div class="todo-list">
-            <select id="filter" name="filter">
+            <select id="filterByStatus" name="filter">
                 <option value="all">all</option>
                 <option value="completed">completed</option>
                 <option value="incompleted">incompleted</option>
@@ -31,7 +31,7 @@
                     <th id="date">Date</th>
                 </tr>
             </table>
-            <div class="navigation">
+            <div class="table-footer">
                 <div><span class="quantity"></span></div>
                 <input type="button" id="delete-completed" value="delete completed">
 

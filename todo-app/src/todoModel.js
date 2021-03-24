@@ -1,130 +1,121 @@
 import EventEmitter from './emitter.js';
-import { generateId, transformDateFormat } from './helper.js'
-import { EMITS, STATUS,KEYS } from './emits.js'
+import { generateId, transformDateFormat } from './helper.js';
+import { ACTIONS } from './constants/actions.js';
+import { STATUS } from './constants/status.js';
+
 export default class Model extends EventEmitter {
-    constructor() {
-        super();
-        this.todos = JSON.parse(localStorage.getItem(KEYS.TODOS)) || []
-        this.editedElement = ''
-    }
+  constructor(storage) {
+    super();
+    this.storage = storage;
+    this.status = this.storage.getStatus();
+    this.todos = this.storage.getTodos();
+    this.filtered = [];
+  }
 
-    setTodo(list = this.todos) {
-        localStorage.setItem(KEYS.TODOS, JSON.stringify(list))
-        this.restart()
-    }
+  start() {
+    this.refreshTodos();
+  }
 
-    setState(state) {
-        localStorage.setItem(KEYS.STATUS, state)
-        this.filter(state)
-    }
+  refreshTodos(todos = this.todos) {
+    this.countTodo();
+    this.filterByStatus(this.status, todos);
+  }
 
-    getState() {
-        if (!localStorage.getItem(KEYS.STATUS)) {
-            localStorage.setItem(KEYS.STATUS, STATUS.ALL)
-        }
-        this.restart()
+  countTodo() {
+    this.emit(ACTIONS.COUNTER_CHANGED, this.todos.filter((todo) => todo.status === false).length);
+    if (!this.todos.filter((todo) => todo.status === true).length) {
+      this.emit(ACTIONS.NO_COMPLETED_TODOS);
     }
+  }
 
-    restart() {
-        this.countTodo()
-        this.filter(localStorage.getItem(KEYS.STATUS))
-    }
+  toggleStatus(status) {
+    this.status = status;
+    this.filterByStatus(this.status, this.todos);
+  }
 
-    countTodo() {
-        if (!JSON.parse(localStorage.getItem(KEYS.TODOS))) {
-            localStorage.setItem(KEYS.TODOS, JSON.stringify(this.todos))
-        }
-        this.emit(EMITS.COUNTER_CHANGED, this.todos.filter(todo => todo.status === false).length)
+  filterByStatus(status, todos) {
+    switch (status) {
+      case STATUS.ALL:
+        this.emit(ACTIONS.DATA_MODIFIED, { todos, status });
+        break;
+      case STATUS.COMPLETED:
+        this.filtered = todos.filter((todo) => todo.status === true);
+        this.emit(ACTIONS.DATA_MODIFIED, { todos: this.filtered, status });
+        break;
+      case STATUS.INCOMPLETED:
+        this.filtered = todos.filter((todo) => todo.status === false);
+        this.emit(ACTIONS.DATA_MODIFIED, { todos: this.filtered, status });
+        break;
+      default: throw new Error('unexpected status');
     }
+  }
 
-    filter(status) {
-        switch (status) {
-            case STATUS.ALL:
-                this.emit(EMITS.DATA_MODIFIED, this.todos)
-                break;
-            case STATUS.COMPLETED:
-                const completed = this.todos.filter(todo => todo.status === true)
-                this.emit(EMITS.DATA_MODIFIED, completed)
-                break;
-            case STATUS.INCOMPLETED:
-                const incompleted = this.todos.filter(todo => todo.status === false)
-                this.emit(EMITS.DATA_MODIFIED, incompleted)
-                break;
-            default: throw new Error('unexpected status')
-        }
-    }
+  createItem(text) {
+    const date = new Date();
+    const todo = {
+      id: generateId(),
+      text,
+      status: false,
+      dateFormat: `${transformDateFormat(date.getDate())}-${transformDateFormat(1 + date.getMonth())}-${date.getFullYear()}`,
+      parseDate: Date.parse(date),
+    };
+    this.todos.push(todo);
+    this.refreshTodos();
+  }
 
-    add(text) {
-        const date = new Date()
-        const todo = {
-            id: generateId(),
-            text: text,
-            status: false,
-            contenteditable: false,
-            year: date.getFullYear(),
-            month: transformDateFormat(1 + date.getMonth()),
-            date: transformDateFormat(date.getDate()),
-            parseDate: Date.parse(date)
-        }
-        if (text) {
-            this.todos.push(todo)
-            this.setTodo(this.todos)
-        }
+  sortByDate() {
+    if (JSON.stringify(this.todos)
+    !== JSON.stringify(this.todos.sort((a, b) => a.parseDate - b.parseDate))) {
+      this.refreshTodos(this.todos.sort((a, b) => a.parseDate - b.parseDate));
+    } else {
+      this.refreshTodos(this.todos.sort((a, b) => b.parseDate - a.parseDate));
     }
+  }
 
-    sortByDate() {
-        const todos = (localStorage.getItem(KEYS.TODOS))
-        if (todos !== JSON.stringify(this.todos.sort((a, b) => b.parseDate - a.parseDate))) {
-            this.setTodo(this.todos.sort((a, b) => b.parseDate - a.parseDate))
-        } else {
-            this.setTodo(this.todos.sort((a, b) => a.parseDate - b.parseDate))
-        }
-    }
+  saveEditedItem(id, updatedText) {
+    this.todos = this.todos.map((todo) => {
+      if (todo.id === id) {
+        todo.text = updatedText;
+      }
+      return todo;
+    });
+    this.refreshTodos();
+  }
 
-    edit(id) {
-        this.todos = this.todos.map(todo => {
-            if (todo.id === id) {
-                todo.contenteditable = true
-            }
-            return todo
-        })
-        this.setTodo(this.todos)
-    }
+  deleteCompleted() {
+    this.todos = this.todos.filter((todo) => todo.status === false);
+    this.refreshTodos();
+    this.emit(ACTIONS.COMPLETED_REMOVED);
+  }
 
-    saveStorage(id, updatedText) {
-        this.todos = this.todos.map(todo => {
-            if (todo.id === id) {
-                todo.text = updatedText
-                todo.contenteditable = false
-            }
-            return todo
-        })
-        this.setTodo(this.todos)
-    }
+  deleteItem(id) {
+    this.todos = this.todos.filter((todo) => todo.id !== id);
+    this.refreshTodos();
+  }
 
-    deleteCompleted() {
-        this.todos = this.todos.filter(todo => todo.status === false)
-        this.setTodo(this.todos)
-        this.emit(EMITS.COMPLETED_REMOVED)
-    }
+  toggleStateAll(bool) {
+    this.todos.forEach((todo) => {
+      todo.status = bool;
+    });
+    this.refreshTodos();
+  }
 
-    delete(id) {
-        this.todos = this.todos.filter(todo => todo.id !== id)
-        this.setTodo(this.todos)
-    }
+  toggleState(id) {
+    this.todos = this.todos.map((todo) => {
+      if (todo.id === id) {
+        todo.status = !todo.status;
+      }
+      return todo;
+    });
+    this.refreshTodos();
+  }
 
-    toggleAll(boolean) {
-        this.todos.forEach(todo => todo.status = boolean)
-        this.setTodo(this.todos)
-    }
+  validateData(data) {
+    const pattern = /\d|\w+|[А-Яа-яёЁ]/;
+    this.emit(ACTIONS.DATA_VALIDATED, pattern.test(data));
+  }
 
-    toggle(id) {
-        this.todos = this.todos.map(todo => {
-            if (todo.id === id) {
-                todo.status = !todo.status
-            }
-            return todo
-        })
-        this.setTodo(this.todos)
-    }
+  setState() {
+    this.storage.setData(this.status, this.todos);
+  }
 }

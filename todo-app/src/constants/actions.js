@@ -1,0 +1,16 @@
+export const ACTIONS = {
+  DATA_MODIFIED: 'data was modified',
+  DATA_EDITED: 'data was edited',
+  DATA_ENTERED: 'data was entered',
+  COMPLETED_REMOVED: 'completed items were deleted',
+  COUNTER_CHANGED: 'counter was changed',
+  TABLE_CLICKED: 'table was clicked',
+  TABLE_DBLCLICKED: 'table was double clicked',
+  NEW_STATUS: 'status was changed',
+  DELETE_COMPLETED: 'completed data to delete',
+  DATE_CLICKED: 'tablehead "Date" was clicked',
+  INPUT_MODIFIED: 'input was modified',
+  DATA_VALIDATED: 'data was validated',
+  LEAVE_PAGE: 'end current session',
+  NO_COMPLETED_TODOS: 'no completed todos',
+};

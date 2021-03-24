@@ -1,63 +1,70 @@
-import EventEmitter from './emitter.js'
-import DOMelement from './DOMcreator.js'
-import { EMITS, STATUS,KEYS } from './emits.js'
+import EventEmitter from './emitter.js';
+import DOMelement from './DOMcreator.js';
+import { ACTIONS } from './constants/actions.js';
+
 export default class View extends EventEmitter {
-    constructor(elements) {
-        super();
+  constructor(elements) {
+    super();
 
-        this.elements = elements
-        this.input = this.elements.inputField
+    this.elements = elements;
+    this.input = this.elements.inputField;
 
-        elements.addButton.addEventListener('click', () => this.emit(EMITS.DATA_ENTERED, this.input.value));
-        elements.todoTable.addEventListener('click', (event) => { this.emit(EMITS.TABLE_CLICKED, event.target) });
-        elements.todoTable.addEventListener('dblclick', (event) => { this.emit(EMITS.TABLE_DBLCLICKED, event.target) })
-        elements.filter.addEventListener('click', (event) => { this.emit(EMITS.NEW_STATUS, event.target.value) })
-        elements.todoTable.addEventListener('focusout', (event) => {this.emit(EMITS.DATA_EDITED, event.target)});
-        elements.deleteCopmpletedBtn.addEventListener('click', (event) => this.emit(EMITS.DELETE_COMPLETED, event.target));
+    elements.addButton.addEventListener('click', () => this.emit(ACTIONS.DATA_ENTERED, this.input.value));
+    elements.todoTable.addEventListener('click', (event) => { this.emit(ACTIONS.TABLE_CLICKED, event.target); });
+    elements.todoTable.addEventListener('dblclick', (event) => { this.emit(ACTIONS.TABLE_DBLCLICKED, event.target); });
+    elements.filterStatus.addEventListener('click', (event) => { this.emit(ACTIONS.NEW_STATUS, event.target.value); });
+    elements.deleteCopmpletedBtn.addEventListener('click', (event) => this.emit(ACTIONS.DELETE_COMPLETED, event.target));
+    window.addEventListener('beforeunload', () => { this.emit(ACTIONS.LEAVE_PAGE); });
+    this.input.addEventListener('input', (event) => this.emit(ACTIONS.INPUT_MODIFIED, event.target.value));
+  }
 
-    }
-counter(number){
-    document.querySelector('.quantity').innerHTML = `Items left: ${number}`
-}
-    reset() {
-        this.input.value = ''
-        return this.input.value
-    }
+  renderQuantity(number) {
+    document.querySelector('.quantity').innerHTML = `Items left: ${number}`;
+  }
 
-    remove() {
-        const tableElements = document.querySelector('.todo-table')
-        Array.from(tableElements.children).forEach(child => {
-            if (child.classList.contains('table-item')) {
-                child.remove()
-            }
-        })
-    }
+  resetInput() {
+    this.input.value = '';
+    document.getElementById('add-button').disabled = true;
+    return this.input.value;
+  }
 
-    render(todos) {
-        this.reset()
-        this.remove()
-        todos.forEach((todo) => {
-            const row = new DOMelement('tr', 'table.todo-table', 'table-item', todo.id, todo.status,
-                `<td><input type ="checkbox" id="select"></td>
-                </input><td><span id="text" class="editable" contenteditable="${todo.contenteditable}">${todo.text}</span></td>
+  removeTodos() {
+    const tableElements = document.querySelector('.todo-table');
+    return Array.from(tableElements.children).forEach((child) => {
+      if (child.classList.contains('table-item')) {
+        child.remove();
+      }
+    });
+  }
+
+  renderTodos(data) {
+    this.resetInput();
+    this.removeTodos();
+    data.todos.forEach((todo) => {
+      const row = new DOMelement('tr', 'table.todo-table', 'table-item',
+        `<td><input type ="checkbox" id="select"></td>
+                </input><td><span id="text">${todo.text}</span></td>
                 <td><input type="button" id="delete" value="delete"></td>
-                <td>${todo.date}-${todo.month}-${todo.year}</td>`)
-        });
-        this.onfocus()
-        filter.value = localStorage.getItem(KEYS.STATUS)
-    }
+                <td>${todo.dateFormat}</td>`, todo.id, todo.status);
+      return row;
+    });
+    this.elements.filterStatus.value = data.status;
+  }
 
-    onfocus() {
-        const editable = document.querySelectorAll('.editable')
-        editable.forEach(item => {
-            if (item.contentEditable ) {
-                return item.focus()
-            }
-        })
-    }
+  editTodo(data) {
+    const editable = new DOMelement('input', data.parentElement, 'editable', data.innerHTML);
+    data.remove();
+    document.querySelector('.editable').addEventListener('focusout', (event) => { this.emit(ACTIONS.DATA_EDITED, event.target); });
+    return editable;
+  }
 
-    resetCheckbox() {
-        const checkbox = document.getElementById('select-all')
-        checkbox.checked = false
-    }
+  resetCheckbox() {
+    const checkbox = document.getElementById('select-all');
+    checkbox.checked = false;
+  }
+
+  hideAddButton(bool) {
+    const AddButton = document.getElementById('add-button');
+    AddButton.disabled = !bool;
+  }
 }
