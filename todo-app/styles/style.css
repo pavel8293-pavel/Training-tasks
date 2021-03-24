@@ -54,7 +54,7 @@ tr:first-child {
     text-align: center;
 }
 
-#filter {
+#filterByStatus {
     background-color: #bfe1f5d5 ;
 }
 
@@ -62,7 +62,7 @@ tr:first-child {
     text-decoration: line-through;
 }
 
-.navigation {
+.table-footer {
     display: flex;
     justify-content: space-between;
     width: 40vw;
@@ -76,8 +76,18 @@ input[type=button] {
     height: 20px;
 }
 
-input[type=text] {
+#add-item {
     background: rgba(173, 173, 170, 0.376);
+}
+
+#text:hover {
+    cursor: pointer;
+}
+
+.editable {
+    text-align:center;
+    background-color: rgba(136, 136, 248, 0.445);
+    width:100%
 }
 
 input[type=checkbox] {

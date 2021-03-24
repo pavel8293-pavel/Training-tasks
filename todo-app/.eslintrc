@@ -1,0 +1,18 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": [
+        "airbnb/base",
+        "eslint:recommended"
+    ],
+
+    "rules": {
+        "import/prefer-default-export": "off",
+        "no-param-reassign": ["error",{"props": false}],
+        "class-methods-use-this": ["error", { "exceptMethods": ["setData","getStatus","getTodos","renderQuantity","hideAddButton","resetCheckbox","removeTodos"] }],
+        "import/extensions": [ 0 ]
+    
+    }
+}
