@@ -2,6 +2,7 @@ import { STORAGE_KEYS } from './constants/storage-keys.js';
 import { STATUS } from './constants/status.js';
 
 export default class Storage {
+  
   setData(statusValue, todos) {
     if (typeof statusValue === 'string') {
       localStorage.setItem(STORAGE_KEYS.STATUS, statusValue);
@@ -22,4 +23,6 @@ export default class Storage {
   getStatus() {
     return localStorage.getItem(STORAGE_KEYS.STATUS) || STATUS.ALL;
   }
+
+
 }

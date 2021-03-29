@@ -8,9 +8,17 @@ export const ACTIONS = {
   TABLE_DBLCLICKED: 'table was double clicked',
   NEW_STATUS: 'status was changed',
   DELETE_COMPLETED: 'completed data to delete',
-  DATE_CLICKED: 'tablehead "Date" was clicked',
+  DATE_CLICKED: 'table head "Date" was clicked',
   INPUT_MODIFIED: 'input was modified',
   DATA_VALIDATED: 'data was validated',
   LEAVE_PAGE: 'end current session',
   NO_COMPLETED_TODOS: 'no completed todos',
+  TODO_CREATED:'todo was created',
+  TODOLIST_CHANGED:'todolist was changed',
+  STATUS_SET:'new status was set',
+  SELECT_ALL_CLICKED:'select-all checkbox was clicked',
+  ITEM_REMOVED:'single item was removed',
+  EDITION_FIELD_ADDED:"edition fild was added",
+  OLD_TODOS_REMOVED:'old todos were removed',
+  TODO_STATE_CHANGED:'state of todo was changed'
 };
