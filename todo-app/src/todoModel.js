@@ -1,36 +1,43 @@
 import EventEmitter from './emitter.js';
-import { generateId, transformDateFormat } from './helper.js';
 import { ACTIONS } from './constants/actions.js';
 import { STATUS } from './constants/status.js';
+import { replaceEscapedChar } from './inputEscaper.js';
 
 export default class Model extends EventEmitter {
-  constructor(storage) {
+  constructor(data) {
     super();
-    this.storage = storage;
-    this.status = this.storage.getStatus();
-    this.todos = this.storage.getTodos();
+    this.data = data;
     this.filtered = [];
+    this.sorted = 0
   }
 
   start() {
     this.refreshTodos();
   }
 
-  refreshTodos(todos = this.todos) {
-    this.countTodo();
-    this.filterByStatus(this.status, todos);
+  refreshTodos(todos = this.data.getTodos()) {
+    this.filterByStatus(this.data.getStatus(), todos);
+    this.emit(ACTIONS.COUNTER_CHANGED, this.data.filterByStatus(STATUS.EMPTY));
   }
 
-  countTodo() {
-    this.emit(ACTIONS.COUNTER_CHANGED, this.todos.filter((todo) => todo.status === false).length);
-    if (!this.todos.filter((todo) => todo.status === true).length) {
-      this.emit(ACTIONS.NO_COMPLETED_TODOS);
-    }
+  newTodo(todo) {
+    if (todo.pattern)
+      this.emit(ACTIONS.TODO_CREATED, this.data.createTodo(todo.todo));
+  }
+
+  addTodo(todo) {
+    this.data.addTodo(todo)
+    this.emit(ACTIONS.TODOLIST_CHANGED, this.data.getTodos());
+  }
+
+  sortByDate() {
+    this.emit(ACTIONS.TODOLIST_CHANGED, this.data.sortTodos(this.sorted));
+    this.sorted = !this.sorted
   }
 
   toggleStatus(status) {
-    this.status = status;
-    this.filterByStatus(this.status, this.todos);
+    this.data.setStatus(status)
+    this.emit(ACTIONS.STATUS_SET);
   }
 
   filterByStatus(status, todos) {
@@ -39,83 +46,48 @@ export default class Model extends EventEmitter {
         this.emit(ACTIONS.DATA_MODIFIED, { todos, status });
         break;
       case STATUS.COMPLETED:
-        this.filtered = todos.filter((todo) => todo.status === true);
+        this.filtered = todos.filter((todo) => todo.checked === STATUS.CHECKED);
         this.emit(ACTIONS.DATA_MODIFIED, { todos: this.filtered, status });
         break;
       case STATUS.INCOMPLETED:
-        this.filtered = todos.filter((todo) => todo.status === false);
+        this.filtered = todos.filter((todo) => todo.checked === '');
         this.emit(ACTIONS.DATA_MODIFIED, { todos: this.filtered, status });
         break;
       default: throw new Error('unexpected status');
     }
   }
 
-  createItem(text) {
-    const date = new Date();
-    const todo = {
-      id: generateId(),
-      text,
-      status: false,
-      dateFormat: `${transformDateFormat(date.getDate())}-${transformDateFormat(1 + date.getMonth())}-${date.getFullYear()}`,
-      parseDate: Date.parse(date),
-    };
-    this.todos.push(todo);
-    this.refreshTodos();
-  }
-
-  sortByDate() {
-    if (JSON.stringify(this.todos)
-    !== JSON.stringify(this.todos.sort((a, b) => a.parseDate - b.parseDate))) {
-      this.refreshTodos(this.todos.sort((a, b) => a.parseDate - b.parseDate));
-    } else {
-      this.refreshTodos(this.todos.sort((a, b) => b.parseDate - a.parseDate));
-    }
-  }
-
   saveEditedItem(id, updatedText) {
-    this.todos = this.todos.map((todo) => {
-      if (todo.id === id) {
-        todo.text = updatedText;
-      }
-      return todo;
-    });
-    this.refreshTodos();
+    this.emit(ACTIONS.TODOLIST_CHANGED, this.data.saveEditedItem(id, replaceEscapedChar(updatedText)));
   }
 
   deleteCompleted() {
-    this.todos = this.todos.filter((todo) => todo.status === false);
-    this.refreshTodos();
+    this.data.deleteCompleted()
     this.emit(ACTIONS.COMPLETED_REMOVED);
+    this.emit(ACTIONS.COUNTER_CHANGED, this.data.filterByStatus(STATUS.EMPTY));
   }
 
   deleteItem(id) {
-    this.todos = this.todos.filter((todo) => todo.id !== id);
-    this.refreshTodos();
+    this.data.deleteItem(id)
+    this.emit(ACTIONS.ITEM_REMOVED, id);
+    this.emit(ACTIONS.COUNTER_CHANGED, this.data.filterByStatus(STATUS.EMPTY));
   }
 
-  toggleStateAll(bool) {
-    this.todos.forEach((todo) => {
-      todo.status = bool;
-    });
-    this.refreshTodos();
+  toggleCheckedAll(bool) {
+    this.data.toggleCheckedAll(bool)
+    this.emit(ACTIONS.TODO_STATE_CHANGED, { 
+      todos: this.data.getTodos(),
+      checked: this.data.filterByStatus(STATUS.CHECKED) })
   }
 
-  toggleState(id) {
-    this.todos = this.todos.map((todo) => {
-      if (todo.id === id) {
-        todo.status = !todo.status;
-      }
-      return todo;
-    });
-    this.refreshTodos();
-  }
-
-  validateData(data) {
-    const pattern = /\d|\w+|[А-Яа-яёЁ]/;
-    this.emit(ACTIONS.DATA_VALIDATED, pattern.test(data));
+  toggleChecked(id) {
+    this.data.toggleChecked(id)
+    this.emit(ACTIONS.TODO_STATE_CHANGED, { 
+      todos: this.data.getTodos(),
+      checked: this.data.filterByStatus(STATUS.CHECKED) })
   }
 
   setState() {
-    this.storage.setData(this.status, this.todos);
+    this.data.setData();
   }
 }
