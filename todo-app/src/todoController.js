@@ -5,20 +5,37 @@ export default class Controller {
     this.model = model;
     this.view = view;
 
-    model.on(ACTIONS.DATA_MODIFIED, (data) => this.view.renderTodos(data));
-    model.on(ACTIONS.COMPLETED_REMOVED, () => this.view.resetCheckbox());
-    model.on(ACTIONS.COUNTER_CHANGED, (number) => this.view.renderQuantity(number));
-    model.on(ACTIONS.DATA_VALIDATED, (bool) => this.view.hideAddButton(bool));
-    model.on(ACTIONS.NO_COMPLETED_TODOS, () => this.view.resetCheckbox());
-    view.on(ACTIONS.DATA_ENTERED, (data) => this.model.createItem(data));
+    model.on(ACTIONS.DATA_MODIFIED, (data) => {
+      this.view.removeOldTodos()
+      this.view.renderTodos(data)
+    });
+
+    model.on(ACTIONS.TODO_CREATED, (todo) => {
+      this.model.addTodo(todo),
+      this.view.resetInput()
+    });
+
+    model.on(ACTIONS.TODO_STATE_CHANGED, (data) => {
+      if (data.checked === 0) {
+       this.view.resetCheckbox() }
+      this.model.refreshTodos(data.todos)
+    });
+
+    model.on(ACTIONS.TODOLIST_CHANGED, (data) => this.model.refreshTodos(data));
+    model.on(ACTIONS.COMPLETED_REMOVED, () => this.view.removeCompletedItems());
+    model.on(ACTIONS.COUNTER_CHANGED, (number) => this.view.renderQuantity(number))
+    model.on(ACTIONS.STATUS_SET, () => this.model.refreshTodos());
+    model.on(ACTIONS.ITEM_REMOVED, (id) => this.view.removeItem(id));
+
+    view.on(ACTIONS.DATA_ENTERED, (data) => {this.model.newTodo(data) });
     view.on(ACTIONS.TABLE_CLICKED, (event) => { this.process(event); });
     view.on(ACTIONS.NEW_STATUS, (state) => { this.model.toggleStatus(state); });
     view.on(ACTIONS.DELETE_COMPLETED, () => this.model.deleteCompleted());
     view.on(ACTIONS.TABLE_DBLCLICKED, (event) => { this.editTodo(event); });
     view.on(ACTIONS.DATA_EDITED, (event) => this.saveEditedItem(event));
-    view.on(ACTIONS.DATE_CLICKED, (event) => this.model.sortByDate(event));
-    view.on(ACTIONS.INPUT_MODIFIED, (data) => this.trimData(data));
+    view.on(ACTIONS.EDITION_FIELD_ADDED, (node) => this.view.removeNode(node));
     view.on(ACTIONS.LEAVE_PAGE, () => this.model.setState());
+
   }
 
   run() {
@@ -29,10 +46,10 @@ export default class Controller {
     const id = Number(event.parentElement.parentElement.id);
     switch (event.id) {
       case ('select-all'):
-        this.model.toggleStateAll(event.checked);
+        this.model.toggleCheckedAll(event.checked);
         break;
       case ('select'):
-        this.model.toggleState(id);
+        this.model.toggleChecked(id);
         break;
       case ('delete'):
         this.model.deleteItem(id);
@@ -50,15 +67,11 @@ export default class Controller {
     }
   }
 
-  saveEditedItem(event) {
-    const id = Number(event.parentElement.parentElement.id);
-    if (event.type === 'text') {
-      this.model.saveEditedItem(id, event.value);
+  saveEditedItem(data) {
+    const id = Number(data.node.parentElement.parentElement.id);
+    if (data.node.type === 'text' && data.text.pattern !== false) {
+      this.model.saveEditedItem(id, data.text.todo);
     }
   }
-
-  trimData(data) {
-    const trimmedData = data.trim();
-    this.model.validateData(trimmedData);
-  }
 }
+
