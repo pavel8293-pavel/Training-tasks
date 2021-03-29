@@ -4,7 +4,6 @@ import {replaceReEscapedChar} from './inputEscaper.js'
 
 export default class todoData {
     constructor(storage) {
-        super()
         this.storage = storage
         this.status = this.storage.getStatus();
         this.todos = this.storage.getTodos();
