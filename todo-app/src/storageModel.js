@@ -23,6 +23,4 @@ export default class Storage {
   getStatus() {
     return localStorage.getItem(STORAGE_KEYS.STATUS) || STATUS.ALL;
   }
-
-
 }
