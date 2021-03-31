@@ -1,12 +1,14 @@
 import EventEmitter from './emitter.js';
+import Todo from './todoFactory.js'
 import { ACTIONS } from './constants/actions.js';
 import { STATUS } from './constants/status.js';
-import { replaceEscapedChar } from './inputEscaper.js';
 
 export default class Model extends EventEmitter {
-  constructor(data) {
+  constructor(storage) {
     super();
-    this.data = data;
+    this.storage = storage;
+    this.status = this.storage.getStatus();
+    this.todos = this.storage.getTodos();
     this.filtered = [];
     this.sorted = 0
   }
@@ -15,79 +17,111 @@ export default class Model extends EventEmitter {
     this.refreshTodos();
   }
 
-  refreshTodos(todos = this.data.getTodos()) {
-    this.filterByStatus(this.data.getStatus(), todos);
-    this.emit(ACTIONS.COUNTER_CHANGED, this.data.filterByStatus(STATUS.EMPTY));
-  }
-
-  newTodo(todo) {
-    if (todo.pattern)
-      this.emit(ACTIONS.TODO_CREATED, this.data.createTodo(todo.todo));
+  newTodo(text) {
+    if (text) {
+      this.emit(ACTIONS.TODO_CREATED, Todo.create(text));
+    }
   }
 
   addTodo(todo) {
-    this.data.addTodo(todo)
-    this.emit(ACTIONS.TODOLIST_CHANGED, this.data.getTodos());
+    this.getTodos().push(todo)
+    this.emit(ACTIONS.TODO_LIST_CHANGED, this.getTodos());
   }
 
-  sortByDate() {
-    this.emit(ACTIONS.TODOLIST_CHANGED, this.data.sortTodos(this.sorted));
-    this.sorted = !this.sorted
-  }
-
-  toggleStatus(status) {
-    this.data.setStatus(status)
-    this.emit(ACTIONS.STATUS_SET);
+  refreshTodos(todos = this.getTodos()) {
+    this.filterByStatus(this.getStatus(), todos);
   }
 
   filterByStatus(status, todos) {
     switch (status) {
       case STATUS.ALL:
-        this.emit(ACTIONS.DATA_MODIFIED, { todos, status });
+        this.emit(ACTIONS.TODOS_MODIFIED, { todos: this.getTodos(), status });
         break;
       case STATUS.COMPLETED:
-        this.filtered = todos.filter((todo) => todo.checked === STATUS.CHECKED);
-        this.emit(ACTIONS.DATA_MODIFIED, { todos: this.filtered, status });
+        this.filtered = todos.filter(Todo.filtered,true);
+        this.emit(ACTIONS.TODOS_MODIFIED, { todos: this.filtered, status });
         break;
       case STATUS.INCOMPLETED:
-        this.filtered = todos.filter((todo) => todo.checked === '');
-        this.emit(ACTIONS.DATA_MODIFIED, { todos: this.filtered, status });
+        this.filtered = todos.filter(Todo.filtered,false);
+        this.emit(ACTIONS.TODOS_MODIFIED, { todos: this.filtered, status });
         break;
       default: throw new Error('unexpected status');
     }
   }
 
+  sortByDate() {
+    if (this.sorted) {
+      const sorted = this.getTodos().sort(Todo.compareASC)
+      this.emit(ACTIONS.TODO_LIST_CHANGED, sorted);
+    } else {
+      const sorted = this.getTodos().sort(Todo.compareDESC)
+      this.emit(ACTIONS.TODO_LIST_CHANGED, sorted);
+    }
+    this.sorted = !this.sorted
+  }
+
   saveEditedItem(id, updatedText) {
-    this.emit(ACTIONS.TODOLIST_CHANGED, this.data.saveEditedItem(id, replaceEscapedChar(updatedText)));
+    this.getTodos().map((todo) => {
+      if (todo.id === id) {
+        todo.text = updatedText;
+      }
+      return todo;
+    });
+    this.emit(ACTIONS.TODO_LIST_CHANGED, this.getTodos());
   }
 
-  deleteCompleted() {
-    this.data.deleteCompleted()
-    this.emit(ACTIONS.COMPLETED_REMOVED);
-    this.emit(ACTIONS.COUNTER_CHANGED, this.data.filterByStatus(STATUS.EMPTY));
+  deleteCompletedTodos() {
+    const todos = this.getTodos().filter(Todo.filtered,false)
+    this.setTodos(todos)
+    this.emit(ACTIONS.COMPLETED_DELETED);
   }
 
-  deleteItem(id) {
-    this.data.deleteItem(id)
-    this.emit(ACTIONS.ITEM_REMOVED, id);
-    this.emit(ACTIONS.COUNTER_CHANGED, this.data.filterByStatus(STATUS.EMPTY));
+  deleteTodo(id) {
+    const todos = this.getTodos().filter(Todo.filtered,id)
+    this.setTodos(todos)
+    this.emit(ACTIONS.TODO_DELETED, id);
   }
 
   toggleCheckedAll(bool) {
-    this.data.toggleCheckedAll(bool)
-    this.emit(ACTIONS.TODO_STATE_CHANGED, { 
-      todos: this.data.getTodos(),
-      checked: this.data.filterByStatus(STATUS.CHECKED) })
+    this.getTodos().map(Todo.toggleAll,bool)
+    this.emit(ACTIONS.TODO_LIST_CHANGED, this.getTodos());
   }
 
   toggleChecked(id) {
-    this.data.toggleChecked(id)
-    this.emit(ACTIONS.TODO_STATE_CHANGED, { 
-      todos: this.data.getTodos(),
-      checked: this.data.filterByStatus(STATUS.CHECKED) })
+    this.getTodos().map(Todo.toggle,id)
+    this.emit(ACTIONS.TODO_LIST_CHANGED, this.getTodos());
   }
 
-  setState() {
-    this.data.setData();
+  toggleStatus(status) {
+    this.setStatus(status)
+    this.emit(ACTIONS.STATUS_SET);
+  }
+
+  getTodos() {
+    return this.todos
+  }
+
+  getStatus() {
+    return this.status
+  }
+
+  setStatus(status) {
+    this.status = status
+  }
+
+  setTodos(todos) {
+    this.todos = todos
+  }
+
+  setData() {
+    this.storage.setData(this.getStatus(), this.getTodos())
+  }
+
+  todosNumber() {
+    const filtered = this.getTodos().filter(Todo.filtered,false).length
+    if(filtered){
+      this.emit(ACTIONS.RESET_SELECT_ALL);
+    }
+    return filtered
   }
 }

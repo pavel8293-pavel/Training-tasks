@@ -11,58 +11,23 @@ export default class View extends EventEmitter {
     this.elements = elements;
     this.input = this.elements.inputField;
 
-    elements.todoTable.addEventListener('click', (event) => { this.emit(ACTIONS.TABLE_CLICKED, event.target); });
+    elements.todoTable.addEventListener('click', (event) =>  this.emit(ACTIONS.TABLE_CLICKED, event.target));
+    elements.selectAll.addEventListener('change', (event) => this.emit(ACTIONS.SELECT_ALL_CHANGED, event))
     elements.todoTable.addEventListener('dblclick', (event) => { this.emit(ACTIONS.TABLE_DBLCLICKED, event.target); });
-    elements.filterStatus.addEventListener('change', (event) => { this.emit(ACTIONS.NEW_STATUS, event.target.value); });
+    elements.filterStatus.addEventListener('change', (event) => this.emit(ACTIONS.NEW_STATUS, event.target.value));
     elements.deleteCopmpletedBtn.addEventListener('click', (event) => this.emit(ACTIONS.DELETE_COMPLETED, event.target));
-    window.addEventListener('unload', () => { this.emit(ACTIONS.LEAVE_PAGE); });
-    this.input.addEventListener('blur', (event) => { this.emit(ACTIONS.DATA_ENTERED, this.validateEnteredData(event.target.value)) });
+    elements.date.addEventListener('click', () => this.emit(ACTIONS.DATE_CLICKED));
+    window.addEventListener('unload', () => this.emit(ACTIONS.LEAVE_PAGE));
+    this.input.addEventListener('blur', (event) =>  this.emit(ACTIONS.TEXT_ENTERED, this.validateEnteredTodo(event.target.value)));
   }
 
-  renderQuantity(number) {
-    document.querySelector('.quantity').innerHTML = `Items left: ${number}`;
-  }
-
-
-  resetInput() {
-    this.input.value = '';
-    return this.input.value;
-  }
-
-  removeOldTodos() {
+  removeTodos() {
     const tableElements = document.querySelector('tbody');
     return Array.from(tableElements.children).forEach((child) => {
       if (child.classList.contains('table-item')) {
         child.remove();
       }
     });
-  }
-
-  removeItem(id) {
-    const tableElements = document.querySelectorAll('.table-item');
-    tableElements.forEach(todo => {
-      if (todo.id === id.toString()) {
-        todo.remove()
-      }
-    })
-  }
-
-  removeCompletedItems() {
-    const tableElements = document.querySelectorAll('.table-item');
-    tableElements.forEach(todo => {
-      if (todo.children[0].children[0].checked === true) {
-        todo.remove()
-      }
-    })
-  }
-
-  removeNode(node) {
-    node.remove()
-  }
-
-  resetCheckbox() {
-    const checkbox = document.getElementById('select-all');
-    checkbox.checked = false;
   }
 
   renderTodos(data) {
@@ -76,16 +41,55 @@ export default class View extends EventEmitter {
     this.elements.filterStatus.value = data.status;
   }
 
+  validateEnteredTodo(text) {
+    const RegExpPattern = /\d|\w+|[А-Яа-яёЁ]/;
+    if (RegExpPattern.test(text)) {
+      return replaceEscapedChar(text.trim())
+    } else {
+      console.log('ERROR INPUT MUST CONTAIN LETTERS OR NUMBERS')
+    }
+  }
+
+  resetInput() {
+    this.input.value = '';
+    return this.input.value;
+  }
+
+  removeItem(id) {
+    const tableElements = document.querySelectorAll('.table-item');
+    tableElements.forEach(todo => {
+      if (todo.id === id.toString()) {
+        todo.remove()
+      }
+    })
+  }
+
+  resetCheckbox() {
+    const checkbox = document.getElementById('select-all');
+    checkbox.checked = false;
+  }
+
+  deleteCompletedTodos() {
+    const tableElements = document.querySelectorAll('.table-item');
+    tableElements.forEach(todo => {
+      if (todo.children[0].children[0].checked === true) {
+        todo.remove()
+      }
+    })
+  }
+
   editTodo(node) {
     createInput(node).addEventListener('focusout', (event) => {
-      this.emit(ACTIONS.DATA_EDITED, { text: this.validateEnteredData(event.target.value), node: event.target });
+      this.emit(ACTIONS.TODO_EDITED, {text: this.validateEnteredTodo(event.target.value), node: event});
     })
     this.emit(ACTIONS.EDITION_FIELD_ADDED, node);
   }
 
-  validateEnteredData(todo) {
-    const pattern = /\d|\w+|[А-Яа-яёЁ]/;
-    return { todo: replaceEscapedChar(todo), pattern: pattern.test(todo) };
+  removeNode(node) {
+    node.remove()
   }
 
+  renderQuantity(number) {
+    document.querySelector('.quantity').innerHTML = `Items left: ${number}`;
+  }
 }
