@@ -11,8 +11,9 @@
     "rules": {
         "import/prefer-default-export": "off",
         "no-param-reassign": ["error",{"props": false}],
-        "class-methods-use-this": ["error", { "exceptMethods": ["setData","getStatus","getTodos","renderQuantity","hideAddButton","resetCheckbox","removeTodos"] }],
-        "import/extensions": [ 0 ]
+        "class-methods-use-this": ["error", { "exceptMethods": ["setData","getStatus","getTodos","renderQuantity","resetCheckbox","removeTodos"] }],
+        "import/extensions": [ 0 ],
+        "no-console": "off"
     
     }
 }
