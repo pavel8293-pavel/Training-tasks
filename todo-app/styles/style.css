@@ -76,9 +76,21 @@ input[type=button] {
     height: 20px;
 }
 
-.input-text {
+.add-item {
     background: rgba(173, 173, 170, 0.376);
 }
+
+#nameError {
+    display: none;
+  }
+  
+  #nameError.visible {
+    display: block;
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+  }
+
 
 #text:hover {
     cursor: pointer;
@@ -102,11 +114,6 @@ input[type=button]:hover, #filter:hover, th#date:hover {
 input[type=checkbox]:hover {
     cursor: pointer;
 }
-
-.wrong-input {
-    background-color: rgb(235, 143, 143);
-}
-
 
 @media only screen and (max-width: 1000px) {
     .todo-list {

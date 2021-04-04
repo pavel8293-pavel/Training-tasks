@@ -19,6 +19,7 @@ export default class Model extends EventEmitter {
   }
 
   createTodo(text) {
+    console.log(1)
     if(text){
       const todo = Todo.create(text);
       const todos = this.getTodos();
@@ -60,7 +61,7 @@ export default class Model extends EventEmitter {
   saveEditedItem(updatedText, id) {
     const todos = this.getTodos();
     todos.forEach((todo) => {
-      if (todo.id === id) {
+      if (todo.id === id && updatedText) {
         todo.text = updatedText;
       }
       return todo;
