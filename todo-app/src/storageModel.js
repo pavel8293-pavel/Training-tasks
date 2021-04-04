@@ -1,22 +1,16 @@
 import { STORAGE_KEYS } from './constants/storage-keys.js';
 import { STATUS } from './constants/status.js';
+import Todo from './Todo.js';
 
 export default class Storage {
   setData(statusValue, todos) {
-    if (typeof statusValue === 'string') {
-      localStorage.setItem(STORAGE_KEYS.STATUS, statusValue);
-    } else {
-      throw new Error('Unexpected status format');
-    }
-    if (typeof todos === 'object') {
-      localStorage.setItem(STORAGE_KEYS.TODOS, JSON.stringify(todos));
-    } else {
-      throw new Error('Unexpected todos format');
-    }
+    localStorage.setItem(STORAGE_KEYS.STATUS, statusValue);
+    localStorage.setItem(STORAGE_KEYS.TODOS, JSON.stringify(todos));
   }
 
   getTodos() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.TODOS)) || [];
+    const todos = JSON.parse(localStorage.getItem(STORAGE_KEYS.TODOS));
+    return todos.map((todo) => Todo.restore(todo.text, todo.id, todo.checked, todo.date)) || [];
   }
 
   getStatus() {

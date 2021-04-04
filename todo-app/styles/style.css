@@ -76,7 +76,7 @@ input[type=button] {
     height: 20px;
 }
 
-#add-item {
+.input-text {
     background: rgba(173, 173, 170, 0.376);
 }
 
@@ -101,6 +101,10 @@ input[type=button]:hover, #filter:hover, th#date:hover {
 
 input[type=checkbox]:hover {
     cursor: pointer;
+}
+
+.wrong-input {
+    background-color: rgb(235, 143, 143);
 }
 
 

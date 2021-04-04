@@ -2,7 +2,6 @@ import EventEmitter from './emitter.js';
 import Todo from './Todo.js';
 import { ACTIONS } from './constants/actions.js';
 import { STATUS } from './constants/status.js';
-import { replaceEscapedChar } from './inputEscaper.js';
 
 export default class Model extends EventEmitter {
   constructor(storage) {
@@ -11,32 +10,25 @@ export default class Model extends EventEmitter {
     this.status = this.storage.getStatus();
     this.todos = this.storage.getTodos();
     this.filtered = [];
-    this.isSorted = false;
+    this.isSortedDESC = false;
+    window.addEventListener('unload', () => this.setData());
   }
 
   start() {
-    this.refreshTodos();
+    this.filterByStatus();
   }
 
-  newTodo(text) {
-    if (text) {
-      const todo = Todo.create(replaceEscapedChar(text));
-      this.addTodo(todo);
+  createTodo(text) {
+    if(text){
+      const todo = Todo.create(text);
+      const todos = this.getTodos();
+      todos.push(todo);
+      this.setTodos(todos);
       this.emit(ACTIONS.TODO_CREATED);
     }
   }
 
-  addTodo(todo) {
-    const todos = this.getTodos();
-    todos.push(todo);
-    this.emit(ACTIONS.TODO_LIST_CHANGED, todos);
-  }
-
-  refreshTodos() {
-    this.filterByStatus(this.getStatus(), this.getTodos());
-  }
-
-  filterByStatus(status, todos) {
+  filterByStatus(status = this.getStatus(), todos = this.getTodos()) {
     switch (status) {
       case STATUS.ALL:
         this.emit(ACTIONS.TODOS_MODIFIED, { todos, status });
@@ -55,35 +47,35 @@ export default class Model extends EventEmitter {
 
   sortByDate() {
     const sorted = [...this.getTodos()];
-    if (this.isSorted) {
-      sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
-      this.emit(ACTIONS.TODO_LIST_CHANGED, sorted);
+    if (this.isSortedDESC) {
+      sorted.sort((a, b) => a.date - b.date);
+      this.setTodos(sorted);
     } else {
-      sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
-      this.emit(ACTIONS.TODO_LIST_CHANGED, sorted);
+      sorted.sort((a, b) => b.date - a.date);
+      this.setTodos(sorted);
     }
-    this.isSorted = !this.isSorted;
+    this.isSortedDESC = !this.isSortedDESC;
   }
 
   saveEditedItem(updatedText, id) {
     const todos = this.getTodos();
     todos.forEach((todo) => {
       if (todo.id === id) {
-        todo.text = replaceEscapedChar(updatedText);
+        todo.text = updatedText;
       }
       return todo;
     });
-    this.emit(ACTIONS.TODO_LIST_CHANGED, todos);
+    this.setTodos(todos);
   }
 
   deleteCompletedTodos() {
     const todos = this.getTodos().filter((todo) => todo.checked === false);
-    this.emit(ACTIONS.TODO_LIST_CHANGED, todos);
+    this.setTodos(todos);
   }
 
   deleteTodo(id) {
     const todos = this.getTodos().filter((todo) => todo.id !== id);
-    this.emit(ACTIONS.TODO_LIST_CHANGED, todos);
+    this.setTodos(todos);
   }
 
   toggleCheckedAll(bool) {
@@ -91,7 +83,7 @@ export default class Model extends EventEmitter {
     todos.forEach((todo) => {
       todo.checked = bool;
     });
-    this.emit(ACTIONS.TODO_LIST_CHANGED, todos);
+    this.setTodos(todos);
   }
 
   toggleChecked(id) {
@@ -101,12 +93,7 @@ export default class Model extends EventEmitter {
         todo.checked = !todo.checked;
       }
     });
-    this.emit(ACTIONS.TODO_LIST_CHANGED, todos);
-  }
-
-  toggleStatus(status) {
-    this.setStatus(status);
-    this.emit(ACTIONS.STATUS_SET);
+    this.setTodos(todos);
   }
 
   getTodos() {
@@ -119,10 +106,12 @@ export default class Model extends EventEmitter {
 
   setStatus(status) {
     this.status = status;
+    this.emit(ACTIONS.STATUS_SET);
   }
 
   setTodos(todos) {
     this.todos = todos;
+    this.emit(ACTIONS.TODO_LIST_CHANGED);
   }
 
   setData() {
