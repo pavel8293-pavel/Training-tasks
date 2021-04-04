@@ -53,8 +53,6 @@ export default class View extends EventEmitter {
 
   resetInput() {
     this.input.value = '';
-    this.input.classList.remove('wrong-input')
-    this.input.placeholder = 'Add item to do'
   }
 
   resetCheckbox() {
@@ -93,9 +91,19 @@ export default class View extends EventEmitter {
   validateEnteredText(text) {
     const RegExpPattern = /\S/g;
     if (RegExpPattern.test(text)) {
+      this.passValidation();
       return text.trim();
+    }else{
+      this.failValidation();
     }
-    this.input.classList.add('wrong-input')
-    this.input.placeholder = 'Enter any character'
+  }
+
+  failValidation(){
+    document.getElementById('nameError').classList.add("visible");
+  }
+
+  passValidation(){
+    if(document.getElementById('nameError').classList.contains("visible"))
+    document.getElementById('nameError').classList.remove("visible");
   }
 }
