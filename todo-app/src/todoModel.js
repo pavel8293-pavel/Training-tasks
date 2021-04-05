@@ -19,7 +19,6 @@ export default class Model extends EventEmitter {
   }
 
   createTodo(text) {
-    console.log(1)
     if(text){
       const todo = Todo.create(text);
       const todos = this.getTodos();
