@@ -2,6 +2,7 @@ import EventEmitter from './emitter.js';
 import Todo from './Todo.js';
 import { ACTIONS } from './constants/actions.js';
 import { STATUS } from './constants/status.js';
+import { SORT_TYPE } from './constants/sort-orders.js';
 
 export default class Model extends EventEmitter {
   constructor(storage) {
@@ -10,7 +11,7 @@ export default class Model extends EventEmitter {
     this.status = this.storage.getStatus();
     this.todos = this.storage.getTodos();
     this.filtered = [];
-    this.isSortedDESC = false;
+    this.sortOrder = this.storage.getSortOrder();
     window.addEventListener('unload', () => this.setData());
   }
 
@@ -19,10 +20,11 @@ export default class Model extends EventEmitter {
   }
 
   createTodo(text) {
-    if(text){
+    if (text) {
       const todo = Todo.create(text);
       const todos = this.getTodos();
       todos.push(todo);
+
       this.setTodos(todos);
       this.emit(ACTIONS.TODO_CREATED);
     }
@@ -47,19 +49,25 @@ export default class Model extends EventEmitter {
 
   sortByDate() {
     const sorted = [...this.getTodos()];
-    if (this.isSortedDESC) {
-      sorted.sort((a, b) => a.date - b.date);
-      this.setTodos(sorted);
-    } else {
-      sorted.sort((a, b) => b.date - a.date);
-      this.setTodos(sorted);
+    switch (this.getSortOrder()) {
+      case SORT_TYPE.DESC:
+        sorted.sort((a, b) => a.date - b.date);
+        this.setSortOrder(SORT_TYPE.ASC);
+        break;
+      case SORT_TYPE.ASC:
+        sorted.sort((a, b) => b.date - a.date);
+        this.setSortOrder(SORT_TYPE.DESC);
+        break;
+      default:
+        sorted.sort((a, b) => a.date - b.date);
+        this.setSortOrder(SORT_TYPE.ASC);
     }
-    this.isSortedDESC = !this.isSortedDESC;
+    this.setTodos(sorted);
   }
 
   saveEditedItem(updatedText, id) {
-    const todos = this.getTodos();
-    todos.forEach((todo) => {
+    const todos = [...this.getTodos()];
+    todos.map((todo) => {
       if (todo.id === id && updatedText) {
         todo.text = updatedText;
       }
@@ -79,21 +87,29 @@ export default class Model extends EventEmitter {
   }
 
   toggleCheckedAll(bool) {
-    const todos = this.getTodos();
-    todos.forEach((todo) => {
+    const todos = [...this.getTodos()];
+    todos.map((todo) => {
       todo.checked = bool;
     });
     this.setTodos(todos);
   }
 
   toggleChecked(id) {
-    const todos = this.getTodos();
-    todos.forEach((todo) => {
+    const todos = [...this.getTodos()];
+    todos.map((todo) => {
       if (todo.id === id) {
         todo.checked = !todo.checked;
       }
     });
     this.setTodos(todos);
+  }
+
+  getSortOrder() {
+    return this.sortOrder;
+  }
+
+  setSortOrder(sortOrder) {
+    return this.sortOrder = sortOrder;
   }
 
   getTodos() {
@@ -115,7 +131,9 @@ export default class Model extends EventEmitter {
   }
 
   setData() {
-    this.storage.setData(this.getStatus(), this.getTodos());
+    this.storage.setStatus(this.getStatus());
+    this.storage.setTodos(this.getTodos());
+    this.storage.setSortOrder(this.getSortOrder());
   }
 
   todosNumber() {

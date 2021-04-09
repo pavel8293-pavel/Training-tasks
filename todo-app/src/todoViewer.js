@@ -18,7 +18,7 @@ export default class View extends EventEmitter {
         case ('delete'):
           this.emit(ACTIONS.DELETE_CLICKED, this.getId(event));
           break;
-        default: return;
+        default:
       }
     });
     elements.todoTable.addEventListener('dblclick', (event) => {
@@ -93,17 +93,15 @@ export default class View extends EventEmitter {
     if (RegExpPattern.test(text)) {
       this.passValidation();
       return text.trim();
-    }else{
-      this.failValidation();
     }
+    this.failValidation();
   }
 
-  failValidation(){
-    document.getElementById('nameError').classList.add("visible");
+  failValidation() {
+    document.getElementById('nameError').classList.add('visible');
   }
 
-  passValidation(){
-    if(document.getElementById('nameError').classList.contains("visible"))
-    document.getElementById('nameError').classList.remove("visible");
+  passValidation() {
+    if (document.getElementById('nameError').classList.contains('visible')) document.getElementById('nameError').classList.remove('visible');
   }
 }
